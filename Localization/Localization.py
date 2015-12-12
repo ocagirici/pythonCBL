@@ -1,0 +1,5 @@
+class Localization:
+
+
+    localized = []
+    unlocalized = []
