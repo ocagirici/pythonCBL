@@ -12,8 +12,7 @@ for i in range(5):
     sensors.append(Sensor.Sensor(i, x, y, z))
 
 g = graph.WSN(sensors)
-print(g)
-plotter.plot_actual(g)
+plotter.plot_actual(g, False)
 
 
 
