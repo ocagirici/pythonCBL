@@ -9,9 +9,6 @@ class Sensor:
     globalPos = Point3(0,0,0)
     neighbors = []
 
-
-
-
     def __init__(self, id, x,y,z):
         self.id = id
         self.actualPos = Point3(x,y,z)
