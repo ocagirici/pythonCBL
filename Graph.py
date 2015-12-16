@@ -1,11 +1,40 @@
-from _operator import ne
-
-import sensor
-
-import sympy
 import math
+import sympy
+from vector import Vector as vector
+
 import Geometry.vector as point
-from Geometry.intersections import sss_int, cc_int
+
+
+def quarilaterate(u, v, w, r1, r2, r3):
+    P1 = vector(u)
+    P2 = vector(v)
+    P3 = vector(w)
+    ex = (P2 - P1) / abs(P2 - P1)
+    i = ex * (P3 - P1)
+    ey = (P3 - P1 - i * ex) / abs(P3 - P1 - i * ex)
+    d = abs(P2 - P1)
+    j = ey * (P3 - P1)
+    x = (r1 ** 2 - r2 ** 2 + d ** 2)/(2 * d)
+    y = (r1 ** 2 - r3 ** 2 - x ** 2 + (i + x) ** 2 + j ** 2) / 2 * j
+    ez = ex ^ ey
+    z1 = math.sqrt(r1 ** 2 - x ** 2 - y ** 2)
+    z2 = -z1
+    p1 = P1 + x * ex + y * ey + z1 * ez
+    p2 = P1 + x * ex + y * ey + z2 * ez
+    return [p1, p2]
+
+
+def trilaterate(u, v, r1, r2):
+    P1 = vector(u)
+    P2 = vector(v)
+    ex = (P2 - P1) / abs(P2 - P1)
+    d = abs(P2 - P1)
+    x = (r1 ** 2 - r2 ** 2 + d ** 2)/(2 * d)
+    y1 = math.sqrt(r1 ** 2 - x ** 2)
+    y2 = -y1
+    p1 = P1 + x * ex + y1 * ey
+    p2 = P1 + x * ex + y2 * ey
+    return [p1, p2]
 
 
 def coplanar(points):
@@ -37,8 +66,8 @@ class WSN:
     R = 10.0
     adj = []
     is_adj = []
-    localized_neighbors_3d = []
-    localized_neighbors_2d = []
+    localized_neighbors_3d = {}
+    localized_neighbors_2d = {}
     sensors = []
     localized = []
     unlocalized = []
@@ -46,8 +75,8 @@ class WSN:
     local_pos = []
 
     def clear_localization(self):
-        self.localized_neighbors_3d = [[] for i in range(self.V)]
-        self.localized_neighbors_2d = [[] for i in range(self.V)]
+        self.localized_neighbors_3d = {}
+        self.localized_neighbors_2d = {}
         self.global_pos = [[] for i in range(self.V)]
         self.local_pos = [[] for i in range(self.V)]
 

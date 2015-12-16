@@ -3,6 +3,7 @@ import graph
 import random
 import plotter
 
+
 sensors = []
 
 for i in range(10):
