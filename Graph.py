@@ -1,55 +1,92 @@
 import math
 import sympy
-from vector import Vector as vector
+import numpy as np
+from Geometry.vector import Vector as vector
 
-import Geometry.vector as point
+tol = 0
 
 
-def quarilaterate(u, v, w, r1, r2, r3):
-    P1 = vector(u)
-    P2 = vector(v)
-    P3 = vector(w)
+def quarilaterate(p, r):
+    P1 = vector(p[0])
+    P2 = vector(p[1])
+    P3 = vector(p[2])
     ex = (P2 - P1) / abs(P2 - P1)
     i = ex * (P3 - P1)
     ey = (P3 - P1 - i * ex) / abs(P3 - P1 - i * ex)
     d = abs(P2 - P1)
     j = ey * (P3 - P1)
-    x = (r1 ** 2 - r2 ** 2 + d ** 2)/(2 * d)
-    y = (r1 ** 2 - r3 ** 2 - x ** 2 + (i + x) ** 2 + j ** 2) / 2 * j
+    x = (r[0] ** 2 - r[1] ** 2 + d ** 2)/(2 * d)
+    y = (r[0] ** 2 - r[2] ** 2 - x ** 2 + (i - x) ** 2 + j ** 2) / 2 * j
     ez = ex ^ ey
-    z1 = math.sqrt(r1 ** 2 - x ** 2 - y ** 2)
+    z = r[0] ** 2 - x ** 2 - y ** 2
+    if z < 0:
+        return False
+    z1 = math.sqrt(r[0] ** 2 - x ** 2 - y ** 2)
     z2 = -z1
     p1 = P1 + x * ex + y * ey + z1 * ez
     p2 = P1 + x * ex + y * ey + z2 * ez
     return [p1, p2]
 
 
-def trilaterate(u, v, r1, r2):
-    P1 = vector(u)
-    P2 = vector(v)
+def trilaterate(p, r):
+    P1 = vector(p[0])
+    P2 = vector(p[1])
     ex = (P2 - P1) / abs(P2 - P1)
     d = abs(P2 - P1)
-    x = (r1 ** 2 - r2 ** 2 + d ** 2)/(2 * d)
-    y1 = math.sqrt(r1 ** 2 - x ** 2)
+    x = (r[0] ** 2 - r[1] ** 2 + d ** 2)/(2 * d)
+    y1 = math.sqrt(r[0] ** 2 - x ** 2)
     y2 = -y1
-    p1 = P1 + x * ex + y1 * ey
-    p2 = P1 + x * ex + y2 * ey
+    p1 = P1 + x * ex + y1 * ex
+    p2 = P1 + x * ex + y2 * ex
     return [p1, p2]
+
+def dist(p, i, j):
+    u = p[i]
+    v = p[j]
+    try:
+        return math.sqrt((u[0] - v[0]) ** 2 + (u[1] - v[1]) ** 2 + (u[2] - v[2]) ** 2)
+    except:
+        print(p, i, j, u, v)
 
 
 def coplanar(points):
-    i = sympy.Point3D(points[0][0], points[0][1], points[0][2])
-    j = sympy.Point3D(points[1][0], points[1][1], points[1][2])
-    k = sympy.Point3D(points[2][0], points[2][1], points[2][2])
-    l = sympy.Point3D(points[3][0], points[3][1], points[3][2])
-    return sympy.Point3D.are_coplanar(i, j, k, l)
+    ij = dist(points, 0, 1)
+    ik = dist(points, 0, 2)
+    il = dist(points, 0, 3)
+    jk = dist(points, 1, 2)
+    jl = dist(points, 1, 3)
+    kl = dist(points, 2, 3)
+    M = [
+        [0, 1, 1, 1, 1],
+        [1, 0, ij ** 2, ik ** 2, il ** 2],
+        [1, ij ** 2, 0, jk ** 2, jl ** 2],
+        [1, ik ** 2, jk ** 2, 0, kl ** 2],
+        [1, il **2, jl ** 2, kl ** 2, 0]
+    ]
+
+    det = np.linalg.det(M)
+    V = math.sqrt(det/288)
+    if V <= tol:
+        return True
+    return False
 
 
-def collinear(*points):
-    i = sympy.Point(points[0])
-    j = sympy.Point(points[1])
-    k = sympy.Point(points[2])
-    return sympy.Point.is_collinear(i, j, k)
+def collinear(points):
+    ij = dist(points, 0, 1)
+    ik = dist(points, 0, 2)
+    jk = dist(points, 1, 2)
+    M = [
+        [0, 1, 1, 1],
+        [1, 0, ij ** 2, ik ** 2],
+        [1, ij ** 2, 0, jk ** 2],
+        [1, ik ** 2, jk ** 2, 0]
+    ]
+
+    det = np.linalg.det(M)
+    V = -math.sqrt(det/16)
+    if V <= tol:
+        return True
+    return False
 
 
 def dist3d(i, j):
@@ -59,32 +96,33 @@ def dist3d(i, j):
 def dist2d(i, j):
     return math.sqrt((i[0] - j[0]) ** 2 + (i[1] - j[1]) ** 2)
 
-
 class WSN:
     V = 0
     E = 0
     R = 10.0
-    adj = []
+    adj = {}
     is_adj = []
     localized_neighbors_3d = {}
     localized_neighbors_2d = {}
     sensors = []
     localized = []
     unlocalized = []
-    global_pos = []
-    local_pos = []
+    global_pos = {}
+    local_pos = {}
 
     def clear_localization(self):
         self.localized_neighbors_3d = {}
         self.localized_neighbors_2d = {}
-        self.global_pos = [[] for i in range(self.V)]
-        self.local_pos = [[] for i in range(self.V)]
+        for i in range(self.V):
+            self.localized_neighbors_3d[i] = []
+            self.localized_neighbors_2d[i] = []
 
     def __init__(self, sensors):
         self.sensors = sensors
         self.V = len(sensors)
         self.clear_localization()
-        self.adj = [[] for i in range(self.V)]
+        for i in range(self.V):
+            self.adj[i] = []
         self.is_adj = [[False for i in range(self.V)] for j in range(self.V)]
 
         for i in range(self.V):
@@ -95,10 +133,13 @@ class WSN:
                     self.add_adj(i, j, distance)
 
     def add_adj(self, i, j, dist):
-        self.adj[i].append((j, dist))
-        self.adj[j].append((i, dist))
-        self.is_adj[i][j] = True
-        self.is_adj[j][i] = True
+        self.adj[i].append(j)
+        self.adj[j].append(i)
+        self.is_adj[i][j] = dist
+        self.is_adj[j][i] = dist
+
+    def dist(self, u, v):
+        return self.adj[u][v]
 
     def actual_distance(self, i, j):
         return dist3d(self.sensors[i], self.sensors[j])
@@ -132,24 +173,28 @@ class WSN:
         r = []
         for i in range(4):
             p.append(self.global_pos[localized[i]])
-            r.append(self.adj[i][localized[i]][1])
+            try:
+                r.append(self.dist(node, localized[i]))
+            except:
+                print(node, i, localized)
         if coplanar(p):
             return False
-        sol = sss_int(p[:-1], r[:-1])
+        sol = quarilaterate(p[:-1], r[:-1])
+        if sol is False:
+            return False
         if len(sol) == 0:
             return False
         if len(sol) == 1:
             self.global_pos[node] = sol[0]
         else:
-            p1 = abs(point.norm(point.vector(sol[0]) - point.vector(p[3])) - r[3]) <= r[3] * 0.05
-            p2 = abs(point.norm(point.vector(sol[1]) - point.vector(p[3])) - r[3]) <= r[3] * 0.05
+            p1 = abs((vector(sol[0]) - vector(p[3])) - r[3]) <= r[3] * 0.05
+            p2 = abs((vector(sol[1]) - vector(p[3])) - r[3]) <= r[3] * 0.05
             if p1 and p2:
                 return False
             if p1:
                 self.global_pos[node] = sol[0]
             if p2:
                 self.global_pos[node] = sol[1]
-
             return True
 
     def localize2d(self, node, localized):
@@ -161,14 +206,14 @@ class WSN:
 
         if collinear(p):
             return False
-        sol = cc_int(p[:-1], r[:-1])
+        sol = trilaterate(p[:-1], r[:-1])
         if len(sol) == 0:
             return False
         if len(sol) == 1:
             node.set_local(sol[0])
         else:
-            p1 = abs(point.norm(point.vector(sol[0]) - point.vector(p[2])) - r[3]) <= r * 0.05
-            p2 = abs(point.norm(point.vector(sol[1]) - point.vector(p[2])) - r[3]) <= r * 0.05
+            p1 = abs((vector(sol[0]) - vector(p[2])) - r[2]) <= r[2] * 0.05
+            p2 = abs((vector(sol[1]) - vector(p[2])) - r[2]) <= r[2] * 0.05
             if p1 and p2:
                 return False
             if p1:
@@ -193,20 +238,21 @@ class WSN:
                             self.localized.append(i)
                             F[i] = self.global_pos[i]
                             for j in self.adj[i]:
-                                if j[0] not in self.localized:
-                                    neighbors = self.localized_neighbors_3d[j[0]]
+                                if j not in self.localized:
+                                    neighbors = self.localized_neighbors_3d[j]
                                     neighbors.append(i)
                                     if len(neighbors) >= 4:
-                                        if self.localize3d(j[0], [neighbors[0], neighbors[1], neighbors[2], neighbors[-1]]):
-                                            Q_process.append(j[0])
+                                        if self.localize3d(j, [neighbors[0], neighbors[1], neighbors[2], neighbors[-1]]):
+                                            print(j, 'is localized')
+                                            Q_process.append(j)
                                 if len(F) == self.V:
                                     return F
                                 if len(F) > len(F_best):
                                     F_best = F
-                            print(Q_process)
                         self.clear_localization()
         return F_best
 
     def seed(self, seeds):
+        print('seeds:', seeds)
         for i in range(4):
             self.global_pos[seeds[i]] = self.sensors[seeds[i]]
