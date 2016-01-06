@@ -32,8 +32,8 @@ def trilaterate(u, v, r1, r2):
     x = (r1 ** 2 - r2 ** 2 + d ** 2)/(2 * d)
     y1 = math.sqrt(r1 ** 2 - x ** 2)
     y2 = -y1
-    p1 = P1 + x * ex + y1 * ey
-    p2 = P1 + x * ex + y2 * ey
+    p1 = P1 + x * ex + y1
+    p2 = P1 + x * ex + y2
     return [p1, p2]
 
 
