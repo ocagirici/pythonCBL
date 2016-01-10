@@ -46,7 +46,10 @@ class Vector:
 
     def __truediv__(self, other):
         if type(other) in [int, float]:
-            return Vector([self.i/other, self.j/other, self.k/other])
+            try:
+                return Vector([self.i/other, self.j/other, self.k/other])
+            except:
+                print('self:', self, 'other:', other)
         return Vector([self.i/other.i, self.j/other.j, self.k/other.k])
 
     def __abs__(self):

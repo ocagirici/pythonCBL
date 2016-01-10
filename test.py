@@ -1,7 +1,4 @@
-import numpy as np
-u = [1, 2, 3]
-v = [3, -1, 4]
-a = np.array(u)
-b = np.array(v)
-print(np.add(a,b))
-
+a = [0, 1, 2, 4]
+print(a)
+a = [3, 5, 1]
+print(a)
